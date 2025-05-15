@@ -1,18 +1,16 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from fastapi.security import OAuth2PasswordRequestForm
+from app import schemas, models, database, auth
+from datetime import timedelta
 
 router = APIRouter(
     prefix="/users",
     tags=["users"]
 )
 
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
-from app import schemas, models, database, auth
-from datetime import timedelta
-
 @router.post("/register", response_model=schemas.User)
-def register_user(user: schemas.UserCreate, db: Session = Depends(database.SessionLocal)):
+def register_user(user: schemas.UserCreate, db: Session = Depends(database.my_session_local)):
     db_user = db.query(models.User).filter(models.User.username == user.username).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
@@ -29,7 +27,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(database.Sessi
     return db_user
 
 @router.post("/login", response_model=schemas.Token)
-def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.SessionLocal)):
+def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.my_session_local)):
     user = auth.authenticate_user(db, form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
@@ -44,8 +42,10 @@ def change_password(
     old_password: str,
     new_password: str,
     current_user: models.User = Depends(auth.get_current_user),
-    db: Session = Depends(database.SessionLocal)
+    db: Session = Depends(database.my_session_local)
 ):
+    if len(new_password) < 5:
+        raise HTTPException(status_code=400, detail="Password must be at least 5 characters long")
     if not auth.verify_password(old_password, current_user.password_hash):
         raise HTTPException(status_code=400, detail="Incorrect old password")
     current_user.password_hash = auth.get_password_hash(new_password)

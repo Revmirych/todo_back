@@ -23,6 +23,20 @@ def test_register_and_login(client):
     assert tokens["token_type"] == "bearer"
 
 
+    response = client.post("/users/login", data={
+        "username": "",
+        "password": "testpass123"
+    })
+    assert response.status_code != 200
+
+
+    response = client.post("/users/login", data={
+        "username": "testuser1",
+        "password": ""
+    })
+    assert response.status_code != 200
+
+
     headers = {"Authorization": f"Bearer {tokens['access_token']}"}
     response = client.post("/users/change-password", params={
         "old_password": "testpass123",
@@ -30,14 +44,29 @@ def test_register_and_login(client):
     }, headers=headers)
     assert response.status_code == 200
 
- со старым паролем должен провалиться
+
+    response = client.post("/users/change-password", params={
+        "old_password": "",
+        "new_password": "newpass456"
+    }, headers=headers)
+    assert response.status_code != 200
+
+
+    response = client.post("/users/change-password", params={
+        "old_password": "testpass123",
+        "new_password": ""
+    }, headers=headers)
+    assert response.status_code != 200
+
+
+    # со старым паролем должен провалиться
     response = client.post("/users/login", data={
         "username": "testuser",
         "password": "testpass123"
     })
     assert response.status_code == 400
 
- с новым паролем
+    # с новым паролем
     response = client.post("/users/login", data={
         "username": "testuser",
         "password": "newpass456"

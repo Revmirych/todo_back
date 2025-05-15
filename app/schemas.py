@@ -3,7 +3,7 @@ from typing import Optional, List
 from datetime import datetime
 
 class CategoryBase(BaseModel):
-    name: str
+    name: str = Field(min_length=3)
 
 class CategoryCreate(CategoryBase):
     pass
@@ -14,7 +14,7 @@ class Category(CategoryBase):
         orm_mode = True
 
 class TaskBase(BaseModel):
-    title: str
+    title: str = Field(min_length=3)
     description: Optional[str] = None
     category_id: Optional[int] = None
     priority: Optional[int] = 1
@@ -32,19 +32,19 @@ class Task(TaskBase):
     status: str
     is_completed: bool
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     user_id: int
     category: Optional[Category]
     class Config:
         orm_mode = True
 
 class UserBase(BaseModel):
-    first_name: str
-    last_name: str
-    username: str
+    first_name: str = Field(min_length=3)
+    last_name: str = Field(min_length=3)
+    username: str = Field(min_length=3)
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=5)
 
 class User(UserBase):
     id: int

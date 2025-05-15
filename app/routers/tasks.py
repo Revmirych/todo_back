@@ -1,20 +1,18 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from app import schemas, models, database, auth
+from sqlalchemy import desc
 
 router = APIRouter(
     prefix="/tasks",
     tags=["tasks"]
 )
 
-from fastapi import Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from app import schemas, models, database, auth
-from sqlalchemy import desc
-
 @router.post("/", response_model=schemas.Task)
 def create_task(
     task: schemas.TaskCreate,
-    db: Session = Depends(database.SessionLocal),
+    db: Session = Depends(database.my_session_local),
     current_user: models.User = Depends(auth.get_current_user)
 ):
     db_task = models.Task(**task.dict(), user_id=current_user.id)
@@ -25,7 +23,7 @@ def create_task(
 
 @router.get("/", response_model=List[schemas.Task])
 def get_tasks(
-    db: Session = Depends(database.SessionLocal),
+    db: Session = Depends(database.my_session_local),
     current_user: models.User = Depends(auth.get_current_user),
     status: Optional[str] = Query(None),
     category_id: Optional[int] = Query(None),
@@ -50,7 +48,7 @@ def get_tasks(
 
 @router.get("/{task_id}", response_model=schemas.Task)
 def get_task(task_id: int,
-             db: Session = Depends(database.SessionLocal),
+             db: Session = Depends(database.my_session_local),
              current_user: models.User = Depends(auth.get_current_user)):
     task = db.query(models.Task).filter(models.Task.id == task_id, models.Task.user_id == current_user.id).first()
     if not task:
@@ -59,7 +57,7 @@ def get_task(task_id: int,
 
 @router.put("/{task_id}", response_model=schemas.Task)
 def update_task(task_id: int, task_update: schemas.TaskUpdate,
-                db: Session = Depends(database.SessionLocal),
+                db: Session = Depends(database.my_session_local),
                 current_user: models.User = Depends(auth.get_current_user)):
     task = db.query(models.Task).filter(models.Task.id == task_id, models.Task.user_id == current_user.id).first()
     if not task:
@@ -72,7 +70,7 @@ def update_task(task_id: int, task_update: schemas.TaskUpdate,
 
 @router.delete("/{task_id}")
 def delete_task(task_id: int,
-                db: Session = Depends(database.SessionLocal),
+                db: Session = Depends(database.my_session_local),
                 current_user: models.User = Depends(auth.get_current_user)):
     task = db.query(models.Task).filter(models.Task.id == task_id, models.Task.user_id == current_user.id).first()
     if not task:
@@ -83,7 +81,7 @@ def delete_task(task_id: int,
 
 @router.patch("/{task_id}/status", response_model=schemas.Task)
 def update_task_status(task_id: int, status: str,
-                      db: Session = Depends(database.SessionLocal),
+                      db: Session = Depends(database.my_session_local),
                       current_user: models.User = Depends(auth.get_current_user)):
     task = db.query(models.Task).filter(models.Task.id == task_id, models.Task.user_id == current_user.id).first()
     if not task:

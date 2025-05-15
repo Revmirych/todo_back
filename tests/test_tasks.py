@@ -46,14 +46,27 @@ def test_task_crud_and_filters(client):
     assert response.json()["title"] == "Updated Task"
 
 
+    response = client.put(f"/tasks/{task_id}", json={"title": ""}, headers=headers)
+    assert response.status_code != 200
+
+
     response = client.patch(f"/tasks/{task_id}/status", params={"status": "completed"}, headers=headers)
     assert response.status_code == 200
     assert response.json()["status"] == "completed"
     assert response.json()["is_completed"] is True
 
 
+    response = client.put(f"/tasks/0", json={"title": "Updated Task"}, headers=headers)
+    assert response.status_code != 200
+
+
     response = client.delete(f"/tasks/{task_id}", headers=headers)
     assert response.status_code == 200
+
+
+    response = client.delete(f"/tasks/0", headers=headers)
+    assert response.status_code != 200
+
 
     response = client.get(f"/tasks/{task_id}", headers=headers)
     assert response.status_code == 404

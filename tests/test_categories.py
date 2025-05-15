@@ -19,6 +19,10 @@ def test_category_crud(client):
     assert cat["name"] == "Work"
 
 
+    response = client.post("/categories/", json={"name": ""}, headers=headers)
+    assert response.status_code != 200
+
+
     response = client.get("/categories/", headers=headers)
     assert response.status_code == 200
     cats = response.json()
@@ -31,13 +35,31 @@ def test_category_crud(client):
     assert response.json()["name"] == "Personal"
 
 
+    cat_id = cat["id"]
+    response = client.put(f"/categories/{cat_id}", json={"name": ""}, headers=headers)
+    assert response.status_code != 200
+
+
+    response = client.put(f"/categories/0", json={"name": "Personal"}, headers=headers)
+    assert response.status_code != 200
+
+
     response = client.get(f"/categories/{cat_id}", headers=headers)
     assert response.status_code == 200
     assert response.json()["name"] == "Personal"
 
 
+    response = client.get(f"/categories/0", headers=headers)
+    assert response.status_code == 404
+
+
     response = client.delete(f"/categories/{cat_id}", headers=headers)
     assert response.status_code == 200
+
+
+    response = client.delete(f"/categories/0", headers=headers)
+    assert response.status_code == 404
+
 
     response = client.get(f"/categories/{cat_id}", headers=headers)
     assert response.status_code == 404
